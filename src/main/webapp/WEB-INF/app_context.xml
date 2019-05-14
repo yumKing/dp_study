@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+			http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd 
+			http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+			http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd ">
+	
+	<!-- 让注解生效 -->
+	<context:annotation-config />
+	
+	<!-- 获取配置文件，忽略占位符 ,供spring管理的对象使用 -->
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+			<list>
+				<value>classpath:app.properties</value>
+			</list>
+		</property>
+		<property name="fileEncoding" value="UTF-8" />
+	</bean>
+	
+	<!-- 扫描controller以外的包 -->
+	<context:component-scan base-package="elastic.test">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	<!-- <bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:comp/env/jdbc/monitorsDs" />
+	</bean>
+
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation" value="classpath:config/sqlMapConfig.xml" />
+		<property name="mappingLocations" value="classpath*:config/mappings/**/*.xml" />
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="sqlMapClientTemplate" class="org.springframework.orm.ibatis.SqlMapClientTemplate">
+		<property name="sqlMapClient" ref="sqlMapClient"></property>
+	</bean>
+
+	配置transactionManager
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	tx:advice方式配置事务
+	<tx:advice id="alarmspiderTxAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="query*" propagation="REQUIRES_NEW" />
+			<tx:method name="find*" propagation="REQUIRES_NEW" />
+			<tx:method name="insert*" propagation="REQUIRES_NEW" />
+			<tx:method name="update*" propagation="REQUIRES_NEW" />
+			<tx:method name="add*" propagation="REQUIRES_NEW" />
+			<tx:method name="delete*" propagation="REQUIRES_NEW" />
+			<tx:method name="save*" propagation="REQUIRES_NEW" />
+			<tx:method name="send*" propagation="REQUIRES_NEW" />
+			<tx:method name="create*" propagation="REQUIRES_NEW" />
+			<tx:method name="*" propagation="REQUIRES_NEW" />
+
+		</tx:attributes>
+	</tx:advice>
+	AOP面向切面
+	<aop:config>
+		<aop:pointcut id="alarmspiderControlServiceMethod"
+			expression="execution(* com.jiayincredit.alarmspider.service..*.*(..))" />
+		<aop:advisor advice-ref="alarmspiderTxAdvice"
+			pointcut-ref="alarmspiderControlServiceMethod" />
+	</aop:config>
+
+	enable transaction annotation support
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<bean id="baseDao" class="com.jiayincredit.alarmspider.dao.IbatisDaoImpl">
+		<property name="sqlMapClient">
+			<ref bean="sqlMapClient" />
+		</property>
+	</bean> -->
+
+	<!-- redis config -->
+	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+		<property name="maxTotal" value="${redis.pool.maxTotal}" />
+		<property name="maxIdle" value="${redis.pool.maxIdle}" />
+		<property name="maxWaitMillis" value="${redis.pool.maxWaitMillis}" />
+		<property name="testOnBorrow" value="${redis.pool.testOnBorrow}" />
+	</bean>
+	<bean id="jedisConnFactory"
+		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+		<property name="usePool" value="true" />
+		<property name="hostName" value="${redis.host}" />
+		<property name="port" value="${redis.port}" />
+		<property name="password" value="${redis.password}" />
+		<property name="poolConfig" ref="jedisPoolConfig" />
+	</bean>
+	<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+		<property name="connectionFactory" ref="jedisConnFactory" />
+		<property name="keySerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="valueSerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+		<property name="hashKeySerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="hashValueSerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+	</bean>
+
+	<!-- <bean id="redisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate"> 
+		<property name="connectionFactory" ref="jedisConnFactory"/> </bean> -->
+
+	<!-- mongo config -->
+	<!-- <mongo:db-factory id="mongoDbFactory" host="${mongo.host}" port="${mongo.port}" 
+		dbname="${mongo.database}" /> <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate"> 
+		<constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/> </bean> -->
+
+	<!-- <import resource="classpath:elasticsearch-config.xml" /> -->
+	<!-- <import resource="classpath:config/quartz/quartz-crawler.xml" /> -->
+</beans>
