@@ -2,7 +2,6 @@ package elastic.test.client.exception;
 
 /**
  * 作为一个RuntimeException
- * @author zhou
  *
  */
 public class RuntimeDaoException extends RuntimeException {

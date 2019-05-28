@@ -12,11 +12,6 @@ import elastic.test.client.bytesAdapter.BytesAdapter;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-/**
- * 
- * @author zhou
- *
- */
 public @interface HRowField {
 
 	Class<? extends BytesAdapter> adapter();

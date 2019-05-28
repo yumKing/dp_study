@@ -4,11 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 
 import elastic.test.client.annotation.ProtobufField;
 
-/**
- * 
- * @author zhou
- * 
- */
 public class User {
 	@ProtobufField(index = 1)
 	private String usename;

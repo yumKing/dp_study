@@ -5,8 +5,6 @@ import java.io.File;
 /**
  * 常量类
  * 
- * @author zhou
- * 
  */
 public abstract class Constants {
 

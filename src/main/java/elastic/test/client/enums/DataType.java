@@ -20,11 +20,6 @@ import elastic.test.client.bytesAdapter.BytesAdapter;
 import elastic.test.client.exception.RuntimeDaoException;
 import elastic.test.client.utils.TypeUtils;
 
-/**
- * 
- * @author zhou
- * 
- */
 public enum DataType implements BytesAdapter {
 	STRING("string", String.class) {
 

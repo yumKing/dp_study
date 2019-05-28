@@ -8,9 +8,6 @@ import java.lang.annotation.Target;
 
 /**
  * SD is Serializer and Deserializer。 是字段的序列化反序列化标记
- * 
- * @author zhou
- * 
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

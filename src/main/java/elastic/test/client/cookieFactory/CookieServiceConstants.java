@@ -13,9 +13,9 @@ public interface CookieServiceConstants {
 	public static long USECACHETIME = 2 * 3600 * 1000l;
 	public static long REUSERTIME = 4 * 3600 * 1000l;
 	public static final CookieInfo DEFAULTCOOKIE = new CookieInfo(ERROR,
-			"zhou", "zhou");
-	public static final User SINA_DEFAULT = new User("zhoudevelop@gmail.com",
-			"dearzhou520");
+			"test", "test");
+	public static final User SINA_DEFAULT = new User("test@test.com",
+			"test");
 	public static final String IP = CommonUtils.getIP();
 	
 }

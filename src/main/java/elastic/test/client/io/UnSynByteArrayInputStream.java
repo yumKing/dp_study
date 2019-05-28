@@ -4,7 +4,6 @@ import java.io.InputStream;
 
 /**
  * 不需要关闭
- * @author zhou
  * 
  */
 public class UnSynByteArrayInputStream extends InputStream {

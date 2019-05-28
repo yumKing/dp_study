@@ -32,7 +32,7 @@ public class BaseController {
 	@Autowired
     private EsBaseDao esBaseDao;
 
-	@RequestMapping(value = "/api/helloTest")
+	@RequestMapping(value = "/test/hello")
 	@ResponseBody
 	public void helloTest() {
 		Form form = new Form();
@@ -42,35 +42,21 @@ public class BaseController {
 		System.out.println(errors.getFieldErrors());
 	}
 	
-	@RequestMapping(value = "/api/redisTest")
+	@RequestMapping(value = "/test/redisTest")
 	@ResponseBody
 	public void redisTest(@RequestParam String site) {
-		redisCache.hAdd("site_listen", "WAK", System.currentTimeMillis());
+		redisCache.hAdd("test", "test1", System.currentTimeMillis());
 		System.out.println("save hash finish");
 	}
 	
-	@RequestMapping(value = "/api/es/save")
+	@RequestMapping(value = "/test/es")
 	@ResponseBody
 	public String saves(HttpServletRequest request) {
 		try {
-			TestBO test = new TestBO();
-//			test.setId("test");
-//			test.setAccount_number(500);
-//			test.setBalance(10000);
-//			test.setFirstname("Join");
-//			test.setLastname("Jim");
-//			test.setCity("hangzhou");
-//			test.setEmail("123@126.com");
-//			test.setAge(30);
-//			test.setEmployer("Join jim");
-//			test.setGender("M");
-//			test.setState("CN");
 			ArrayList<String> list = new ArrayList<String>();
 			list.add("25");
 			list.add("44");
 			list.add("99");
-//			esBaseDao.deleteByIds(list, TestBO.class);
-//			esBaseDao.insertOrUpdate(test);
 			Map<String,Object> fieldContentMap = new HashMap<String,Object>();
 			fieldContentMap.put("age",39);
 			List<TestBO> queryList = esBaseDao.queryList(TestBO.class, fieldContentMap, null, null, null);

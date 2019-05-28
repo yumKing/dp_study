@@ -1,10 +1,5 @@
 package elastic.test.client.bytesAdapter;
 
-/**
- * 
- * @author zhou
- * 
- */
 public interface BytesAdapter {
 
 	public byte[] toBytes(Object value);

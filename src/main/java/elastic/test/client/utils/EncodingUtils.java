@@ -14,10 +14,6 @@ import elastic.test.client.io.UnSynByteArrayInputStream;
 import elastic.test.client.io.UnSynByteArrayOutputStream;
 
 
-/**
- * 
- * @author zhouzhiwei 2014年5月7日上午9:29:22
- */
 public class EncodingUtils {
 	private static final Log LOGGER = LogFactory.getLog(EncodingUtils.class);
 

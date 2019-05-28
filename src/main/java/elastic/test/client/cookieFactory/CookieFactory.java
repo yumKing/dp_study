@@ -4,8 +4,6 @@ package elastic.test.client.cookieFactory;
 /**
  * 必须线程安全
  * 
- * @author zhou
- * 
  */
 public interface CookieFactory extends CookieServiceConstants {
 	

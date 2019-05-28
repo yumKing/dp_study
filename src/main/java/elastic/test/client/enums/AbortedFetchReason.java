@@ -1,9 +1,5 @@
 package elastic.test.client.enums;
 
-/**
- * 
- * @author zhouzhiwei 2014年5月7日上午10:08:24
- */
 public enum AbortedFetchReason {
 	// WARNING - adding new reasons requires changes to
 	// AbortedFetchException.mapToUrlStatus

@@ -25,11 +25,6 @@ import elastic.test.client.utils.CloseUtils;
 import elastic.test.client.utils.EncodingUtils;
 import elastic.test.client.utils.EncodingUtils.ExpandedResult;
 
-
-/**
- * 
- * @author zhouzhiwei 2014年5月6日下午1:55:53
- */
 final class Entitys {
 
 	private static int minResponseRate = 0;// 最小下载速度

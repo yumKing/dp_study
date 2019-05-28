@@ -2,10 +2,6 @@ package elastic.test.client.exception;
 
 import elastic.test.client.enums.AbortedFetchReason;
 
-/**
- * 
- * @author zhouzhiwei 2014年5月7日上午10:06:23
- */
 public class AbortedFetchException extends FetchException {
 	/**
 	 * 

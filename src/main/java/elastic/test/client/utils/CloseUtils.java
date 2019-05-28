@@ -8,11 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * 
- * @author zhou
- * 
- */
 public abstract class CloseUtils {
 
 	public static void close(AutoCloseable close) {

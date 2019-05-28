@@ -19,11 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import elastic.test.client.enums.Constants;
 
 
-/**
- * 
- * @author zhou
- * 
- */
 public abstract class FileUtils {
 
 	/**

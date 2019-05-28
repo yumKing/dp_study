@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 /**
  * 不需要关闭
- * @author zhou
  * 
  */
 public class UnSynByteArrayOutputStream extends OutputStream {

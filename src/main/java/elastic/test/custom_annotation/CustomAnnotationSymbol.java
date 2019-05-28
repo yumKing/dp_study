@@ -8,7 +8,6 @@ import java.lang.annotation.Target;
 
 /**
  * 用来标注一个注解为自定义注解的注解
- * @author jinyang
  *
  */
 @Documented  
