@@ -1,4 +1,4 @@
-package elastic.test.client;
+package elastic.test.client.enums;
 
 public enum UserAgent {
 	

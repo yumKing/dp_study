@@ -6,20 +6,23 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
 
 import elastic.test.client.cookieFactory.CookieFactory;
+import elastic.test.client.enums.UserAgent;
 import elastic.test.client.exception.FetchException;
+import elastic.test.client.proxy.ProxyServer;
 
 
 public abstract class AbstractRequest implements Client {
 	// 重试次数
 	protected int retryCount = 3;
 	// 代理ip
-	protected ThreadLocal<Proxy> proxy = new ThreadLocal<Proxy>();
+	protected ThreadLocal<HttpHost> proxy = new ThreadLocal<HttpHost>();
 	// 超时时间
 	protected ThreadLocal<TimeOut> timeout = new ThreadLocal<TimeOut>() {
 		protected TimeOut initialValue() {
@@ -30,6 +33,12 @@ public abstract class AbstractRequest implements Client {
 	protected final CookieFactory cookieFactory;
 	// 用户代理
 	protected ThreadLocal<UserAgent> userAgent = new ThreadLocal<UserAgent>();
+	
+	protected ThreadLocal<ProxyServer> flowproxy = new ThreadLocal<ProxyServer>();
+
+	protected boolean startproxy = false;
+
+	protected boolean closeproxy = false;
 
 	public AbstractRequest() {
 		this(null);
@@ -58,7 +67,7 @@ public abstract class AbstractRequest implements Client {
 	}
 
 	@Override
-	public Request setProxy(Proxy proxy) {
+	public Request setProxy(HttpHost proxy) {
 		this.proxy.set(proxy);
 		return this;
 	}

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HeaderElement;
 import org.apache.http.HeaderElementIterator;
 import org.apache.http.HttpEntity;
@@ -21,6 +22,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.protocol.RequestAcceptEncoding;
 import org.apache.http.config.RegistryBuilder;
@@ -42,9 +45,18 @@ import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
+
 import elastic.test.client.cookieFactory.CookieFactory;
+import elastic.test.client.cookieFactory.CookieInfo;
+import elastic.test.client.cookieFactory.CookieServiceConstants;
+import elastic.test.client.enums.UserAgent;
+import elastic.test.client.exception.AbortedFetchException;
 import elastic.test.client.exception.FetchException;
+import elastic.test.client.proxy.ProxyServer;
+import elastic.test.client.proxy.ProxyServerDao;
+import elastic.test.client.utils.CloseUtils;
 import elastic.test.common.LoggerUtils;
+import elastic.test.utils.LoggerUtil;
 
 @ThreadSafe
 public abstract class AbstractHttpClient extends AbstractRequest{
@@ -237,4 +249,196 @@ public abstract class AbstractHttpClient extends AbstractRequest{
         }
     }
 	
+    public final Response execute(HttpRequestBase request) throws FetchException {
+		return execute(request, null);
+	}
+
+	public final Response execute(HttpRequestBase request, String url) throws FetchException {
+		LoggerUtil.info(this.getClass(),String.format("httpClient send url:%s",url));
+        long start = System.currentTimeMillis();
+        if (cookieFactory != null) {
+			CookieInfo cookie = cookieFactory.getCachedCookie();
+			if (cookie != null && cookie != CookieServiceConstants.DEFAULTCOOKIE) {
+				request.addHeader("Cookie", cookie.getCookie());
+			}
+		}
+		if (startproxy) {
+            Response result = executeWithFlowProxy(request, url);
+            LoggerUtil.info(this.getClass(),String.format("http请求耗时：%s ms",(System.currentTimeMillis()-start)));
+            return result;
+		}
+		if (closeproxy) {
+            Response result = execute0(request, url);
+            LoggerUtil.info(this.getClass(),String.format("http请求耗时：%s ms",(System.currentTimeMillis()-start)));
+            return  result;
+		}
+		HttpHost host = proxy.get();
+		if (host != null) {
+            Response result = execute0(request, url);
+            LoggerUtil.info(this.getClass(),String.format("http请求耗时：%s ms",(System.currentTimeMillis()-start)));
+            return result;
+		}
+		String useProxystr = System.getProperty(Request.USE_SYSTEM_PROXY, "false");
+		boolean useProxy = "true".equals(useProxystr);
+		Response result = useProxy ? executeWithRandomProxy(request, url) : execute0(request, url);
+        LoggerUtil.info(this.getClass(),String.format("http请求耗时：%s ms",(System.currentTimeMillis()-start)));
+        return result;
+	}
+
+	private Response executeWithFlowProxy(HttpRequestBase request, String url) throws FetchException {
+		ProxyServerDao dao = ProxyServerDao.getInstance();
+//		int retry = retryCount;
+		RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
+		TimeOut t = timeout.get();
+		if (t == DEFAULT_TIMEOUNT) {
+			t = PROXY_TIMEOUNT;
+		}
+		requestConfigBuilder.setConnectTimeout(t.getConnectRequestTimeout()==0?defaultTimeout:t.getConnectRequestTimeout());
+		requestConfigBuilder.setConnectionRequestTimeout(t.getConnectTimeout()==0?defaultTimeout:t.getConnectTimeout());
+		requestConfigBuilder.setSocketTimeout(t.getSocketTimeout()==0?defaultTimeout:t.getSocketTimeout());
+
+		Response res = new Response();
+		res.setUrl(StringUtils.isEmpty(url) ? request.getURI().toString() : url);
+
+		FetchException e = null;
+		/*
+		 * 虽然httpclient默认有个retry，但是在许多情况下，依然不够
+		 */
+//		while ((retry--) > 0) {
+			ProxyServer proxy = null;
+			if (flowproxy.get() == null) {
+				proxy = dao.randomGet();
+				if (proxy != null) {
+					requestConfigBuilder.setProxy(proxy.toHttpHost());
+					request.setConfig(requestConfigBuilder.build());
+					CloseableHttpResponse response = null;
+					try {
+						response = client.execute(request);
+						Response r = Entitys.toResponse(request, response, res);
+						flowproxy.set(proxy);
+						return r;
+					} catch (Exception ee) {
+						dao.addFailedProxyServer(proxy);
+						e = new FetchException(ee);
+					} finally {
+						CloseUtils.close(response);
+					}
+				} else {
+					return execute0(request, url);
+				}
+			} else {
+				proxy = flowproxy.get();
+				if (proxy != null) {
+					requestConfigBuilder.setProxy(proxy.toHttpHost());
+					request.setConfig(requestConfigBuilder.build());
+					CloseableHttpResponse response = null;
+					try {
+						response = client.execute(request);
+						Response r = Entitys.toResponse(request, response, res);
+						return r;
+					} catch (Exception ee) {
+						e = new FetchException(ee);
+					} finally {
+						CloseUtils.close(response);
+					}
+				} else {
+					return execute0(request, url);
+				}
+//			}
+
+		}
+
+		throw e;
+	}
+
+	private final Response execute0(HttpRequestBase request, String url) throws FetchException {
+//		int retry = retryCount;
+		Response res = new Response();
+		res.setUrl(StringUtils.isEmpty(url) ? request.getURI().toString() : url);
+//		RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
+//		Timeout t = timeout.get();
+//		requestConfigBuilder.setConnectTimeout(t.connectionRequestTimeout);
+//		requestConfigBuilder.setConnectionRequestTimeout(t.connectTimeout);
+//		requestConfigBuilder.setSocketTimeout(t.socketTimeout);
+        request.setConfig(defaultRequestConfig);
+		if (!closeproxy) {
+			HttpHost host = proxy.get();
+			if (host != null) {
+                request.setConfig(RequestConfig.copy(defaultRequestConfig).setProxy(host).build());;
+//				requestConfigBuilder.setProxy(host);
+			}
+		}
+		FetchException e;
+		/*
+		 * 虽然httpclient默认有个retry，但是在许多情况下，依然不够
+		 */
+//		while ((retry--) > 0) {
+			CloseableHttpResponse response = null;
+			try {
+				response = client.execute(request);
+				return Entitys.toResponse(request, response, res);
+			} catch (AbortedFetchException ee) {
+				e = ee;
+//				break;
+			} catch (FetchException ee) {
+				e = ee;
+				if (ee.getErrortype() == FetchException.UNEXPECTED) {// 对于404之类的错误，没必要重复抓取了
+//					break;
+				}
+
+				if (ee.getErrortype() == FetchException.IMPORTANT) {// 对于重要错误，需要重新设置client
+					//没必要。ignore
+//					resetClient();
+//					break;
+				}
+			} catch (Exception ee) {
+				e = new FetchException(ee);
+			} finally {
+				CloseUtils.close(response);
+			}
+//		}
+		throw e;
+	}
+
+	private final Response executeWithRandomProxy(HttpRequestBase request, String url) throws FetchException {
+		ProxyServerDao dao = ProxyServerDao.getInstance();
+		int retry = retryCount;
+		RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
+		TimeOut t = timeout.get();
+		if (t == DEFAULT_TIMEOUNT) {
+			t = PROXY_TIMEOUNT;
+		}
+		requestConfigBuilder.setConnectTimeout(t.getConnectRequestTimeout());
+		requestConfigBuilder.setConnectionRequestTimeout(t.getConnectTimeout());
+		requestConfigBuilder.setSocketTimeout(t.getSocketTimeout());
+		Response res = new Response();
+		res.setUrl(StringUtils.isEmpty(url) ? request.getURI().toString() : url);
+
+		FetchException e = null;
+		/*
+		 * 虽然httpclient默认有个retry，但是在许多情况下，依然不够
+		 */
+		while ((retry--) > 0) {
+			ProxyServer proxy = dao.randomGet();
+			if (proxy != null) {
+				requestConfigBuilder.setProxy(proxy.toHttpHost());
+				request.setConfig(requestConfigBuilder.build());
+				CloseableHttpResponse response = null;
+				try {
+					response = client.execute(request);
+					Response r = Entitys.toResponse(request, response, res);
+					return r;
+				} catch (Exception ee) {
+					dao.addFailedProxyServer(proxy);
+					e = new FetchException(ee);
+				} finally {
+					CloseUtils.close(response);
+				}
+			} else {
+				return execute0(request, url);
+			}
+		}
+
+		throw e;
+	}
 }
