@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONObject;
 
-public class GeneralParse implements IParse{
+public class ParseMode2 extends IParse{
 
 	@Override
 	public List<JSONObject> parse(String res) {
