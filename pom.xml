@@ -10,7 +10,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<spring.version>4.3.0.RELEASE</spring.version>
+		<spring.version>6.0.0</spring.version>
 		<elasticsearch.version>2.3.5</elasticsearch.version>
 	</properties>
 
